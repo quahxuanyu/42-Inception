@@ -1,9 +1,0 @@
-{
-  "name": "hello-world-http-server",
-  "version": "1.0.0",
-  "description": "Simple Express HTTP server",
-  "dependencies": {
-    "express": "4.18.2",
-    "mongodb": "^5.7.0"
-  }
-}
