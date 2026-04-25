@@ -20,5 +20,9 @@ logs:
 clean:
 	docker compose -f srcs/docker-compose.yaml down -v --remove-orphans
 
+# Remove all unused data (containers, networks, images, and volumes)
+prune:
+	docker system prune -a --volumes
+
 # Restart the application
 restart: down up
