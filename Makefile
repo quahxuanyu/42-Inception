@@ -1,28 +1,48 @@
-.PHONY: up down build logs clean restart
+NAME = inception
+DOCKER_COMPOSE_FILE = ./srcs/docker-compose.yaml
+LOGIN = xquah
 
-# Run the application in detached mode
-up:
-	docker compose -f srcs/docker-compose.yaml up -d
+all: build start
 
-# Stop the application
-down:
-	docker compose -f srcs/docker-compose.yaml down
+# Create folders required by subject (host-side persistence path)
+create_folder:
+	mkdir -p /home/$(LOGIN)/data/mariadb
+	mkdir -p /home/$(LOGIN)/data/wordpress
 
-# Build the images
-build:
-	docker compose -f srcs/docker-compose.yaml build
+# Build all images from the compose file
+build: create_folder
+	@docker compose -f $(DOCKER_COMPOSE_FILE) build
 
-# View logs
+# Create and start containers in detached mode
+start:
+	@docker compose -f $(DOCKER_COMPOSE_FILE) up -d
+
+# Stop running containers without removing them
+stop:
+	@docker compose -f $(DOCKER_COMPOSE_FILE) stop
+
+# Show service logs
 logs:
-	docker compose -f srcs/docker-compose.yaml logs -f
+	@docker compose -f $(DOCKER_COMPOSE_FILE) logs
 
-# Clean up volumes and orphans
+# Shut down containers and remove them
 clean:
-	docker compose -f srcs/docker-compose.yaml down -v --remove-orphans
+	@docker compose -f $(DOCKER_COMPOSE_FILE) down
 
-# Remove all unused data (containers, networks, images, and volumes)
+# Full cleanup: host data, images, containers, orphans, and volumes
+fclean:
+	@sudo rm -rf /home/$(LOGIN)/data/mariadb
+	@sudo rm -rf /home/$(LOGIN)/data/wordpress
+	@docker compose -f $(DOCKER_COMPOSE_FILE) down --rmi all --remove-orphans -v
+
 prune:
-	docker system prune -a --volumes
+    @docker system prune -a --volumes
 
-# Restart the application
-restart: down up
+re: fclean all
+
+# Backward-compatible aliases
+up: start
+down: clean
+restart: re
+
+.PHONY: all create_folder build start stop logs clean fclean re up down restart
