@@ -36,7 +36,7 @@ fclean:
 	@docker compose -f $(DOCKER_COMPOSE_FILE) down --rmi all --remove-orphans -v
 
 prune:
-    @docker system prune -a --volumes
+	@docker system prune -a --volumes
 
 re: fclean all
 
@@ -45,4 +45,4 @@ up: start
 down: clean
 restart: re
 
-.PHONY: all create_folder build start stop logs clean fclean re up down restart
+.PHONY: all create_folder build start stop logs clean fclean prune re up down restart
