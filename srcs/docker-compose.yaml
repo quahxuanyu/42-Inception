@@ -22,8 +22,9 @@ services:
     env_file:
       - .env
     secrets:
-      - db_password
-      - credentials
+      - db_user
+      - wp_admin
+      - wp_user
     volumes:
       - wordpress_data:/var/www/html
     networks:
@@ -71,5 +72,9 @@ secrets:
     file: ../secrets/db_password.txt
   db_root_password:
     file: ../secrets/db_root_password.txt
-  credentials:
-    file: ../secrets/credentials.txt
+  db_user:
+    file: ../secrets/db_user.txt
+  wp_admin:
+    file: ../secrets/wp_admin.txt
+  wp_user:
+    file: ../secrets/wp_user.txt

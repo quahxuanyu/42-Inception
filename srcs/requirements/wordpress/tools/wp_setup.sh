@@ -1,21 +1,26 @@
 #!/bin/sh
 set -e
 
-if [ ! -f /run/secrets/db_password ]; then
-    echo "Missing required secret file: /run/secrets/db_password"
+if [ ! -f /run/secrets/db_user ]; then
+    echo "Missing required secret file: /run/secrets/db_user"
     exit 1
 fi
 
-if [ ! -f /run/secrets/credentials ]; then
-    echo "Missing required secret file: /run/secrets/credentials"
+if [ ! -f /run/secrets/wp_admin ]; then
+    echo "Missing required secret file: /run/secrets/wp_admin"
     exit 1
 fi
 
-MYSQL_PASSWORD_VALUE="$(cat /run/secrets/db_password)"
-WP_ADMIN_PASSWORD_VALUE="$(grep -E '^WP_ADMIN_PASSWORD=' /run/secrets/credentials | head -n 1 | cut -d '=' -f2-)"
-WP_USER_PASSWORD_VALUE="$(grep -E '^WP_USER_PASSWORD=' /run/secrets/credentials | head -n 1 | cut -d '=' -f2-)"
+if [ ! -f /run/secrets/wp_user ]; then
+    echo "Missing required secret file: /run/secrets/wp_user"
+    exit 1
+fi
 
-if [ -z "$MYSQL_PASSWORD_VALUE" ] || [ -z "$WP_ADMIN_PASSWORD_VALUE" ] || [ -z "$WP_USER_PASSWORD_VALUE" ]; then
+DB_USER_PASS="$(cat /run/secrets/db_user)"
+WP_ADMIN_PASS="$(cat /run/secrets/wp_admin)"
+WP_USER_PASSWORD="$(cat /run/secrets/wp_user)"
+
+if [ -z "$DB_USER_PASS" ] || [ -z "$WP_ADMIN_PASS" ] || [ -z "$WP_USER_PASSWORD" ]; then
     echo "Missing required credentials values in Docker secrets"
     exit 1
 fi
@@ -38,11 +43,11 @@ if [ ! -f wp-config.php ]; then
 
     sed -i "s/database_name_here/${MYSQL_DATABASE}/" wp-config.php
     sed -i "s/username_here/${MYSQL_USER}/" wp-config.php
-    sed -i "s/password_here/${MYSQL_PASSWORD_VALUE}/" wp-config.php
+    sed -i "s/password_here/${DB_USER_PASS}/" wp-config.php
     sed -i "s/localhost/mariadb/" wp-config.php
 fi
 
-until mysqladmin ping -h"mariadb" -u"${MYSQL_USER}" -p"${MYSQL_PASSWORD_VALUE}" --silent; do
+until mysqladmin ping -h"mariadb" -u"${MYSQL_USER}" -p"${DB_USER_PASS}" --silent; do
     echo "Waiting for MariaDB..."
     sleep 2
 done
@@ -52,7 +57,7 @@ if ! wp core is-installed --allow-root >/dev/null 2>&1; then
         --url="${DOMAIN_NAME}" \
         --title="${WP_TITLE}" \
         --admin_user="${WP_ADMIN_USER}" \
-        --admin_password="${WP_ADMIN_PASSWORD_VALUE}" \
+        --admin_password="${WP_ADMIN_PASS}" \
         --admin_email="${WP_ADMIN_EMAIL}" \
         --skip-email \
         --allow-root
@@ -60,7 +65,7 @@ fi
 
 if ! wp user get "${WP_USER}" --field=ID --allow-root >/dev/null 2>&1; then
     wp user create "${WP_USER}" "${WP_USER_EMAIL}" \
-        --user_pass="${WP_USER_PASSWORD_VALUE}" \
+        --user_pass="${WP_USER_PASSWORD}" \
         --role=subscriber \
         --allow-root
 fi
