@@ -1,38 +1,70 @@
 # USER_DOC
 
-## Start and Stop
-- Start all services:
-  ```bash
-  make up
-  ```
-- Stop all services:
-  ```bash
-  make down
-  ```
-- Rebuild images:
+## Services Provided
+The stack provides three services:
+- `nginx`: HTTPS entrypoint on port 443
+- `wordpress`: application service running php-fpm
+- `mariadb`: database backend for WordPress
+
+## Start and Stop the Project
+From repository root:
+- Build images:
   ```bash
   make build
   ```
-- Stream logs:
+- Start the stack:
   ```bash
-  make logs
+  make start
   ```
-- Remove containers, volumes, and orphans:
+- Stop running containers:
+  ```bash
+  make stop
+  ```
+- Remove containers:
   ```bash
   make clean
   ```
 
-## Access the Site
-1. Add host mapping on your VM host:
+Alias commands also exist:
+- `make up` (same as `make start`)
+- `make down` (same as `make clean`)
+
+## Access Website and Admin Panel
+1. Configure host mapping on your VM host:
    - `<VM_IP> xquah.42.fr`
-2. Open:
+2. Access the website:
    - `https://xquah.42.fr`
+3. Access WordPress admin panel:
+   - `https://xquah.42.fr/wp-admin`
 
-## Credentials Management
-All runtime credentials are configured in `srcs/.env`:
-- MariaDB: `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD`
-- WordPress admin: `WP_ADMIN_USER`, `WP_ADMIN_PASSWORD`, `WP_ADMIN_EMAIL`
-- WordPress user: `WP_USER`, `WP_USER_PASSWORD`, `WP_USER_EMAIL`
+## Locate and Manage Credentials
+Non-sensitive variables are in:
+- `srcs/.env`
 
-Update values in `.env` before running `make up`.
-If WordPress was already initialized, run `make clean` to recreate data with new credentials.
+Secret files are in:
+- `secrets/db_password.txt`
+- `secrets/db_root_password.txt`
+- `secrets/db_user.txt`
+- `secrets/wp_admin.txt`
+- `secrets/wp_user.txt`
+
+Update secret files before first initialization when changing passwords.
+If WordPress or MariaDB was already initialized, run a full reset to reinitialize with new credentials:
+```bash
+make fclean
+make start
+```
+
+## Check That Services Are Running Correctly
+- Container status:
+  ```bash
+  docker compose -f srcs/docker-compose.yaml ps
+  ```
+- Service logs:
+  ```bash
+  make logs
+  ```
+- HTTPS check:
+  ```bash
+  curl -kI https://xquah.42.fr
+  ```
